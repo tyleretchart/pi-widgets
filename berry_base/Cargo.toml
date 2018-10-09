@@ -1,5 +1,5 @@
 [package]
-name = "berry-base"
+name = "berry_base"
 version = "0.1.0"
 authors = ["pi"]
 
