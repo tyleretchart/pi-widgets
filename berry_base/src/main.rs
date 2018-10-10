@@ -100,12 +100,13 @@ use std::thread::sleep;
 use std::time::Duration;
 use sysfs_gpio::{Direction, Pin};
 
-fn poll(pin_num: u64) -> sysfs_gpio::Result<()> {
+fn poll(pin_num: u64, light_args: Arguments) -> sysfs_gpio::Result<()> {
     // NOTE: this currently runs forever and as such if
     // the app is stopped (Ctrl-C), no cleanup will happen
     // and the GPIO will be left exported.  Not much
     // can be done about this as Rust signal handling isn't
     // really present at the moment.  Revisit later.
+
     let input = Pin::new(pin_num);
     input.with_exported(|| {
         input.set_direction(Direction::In)?;
@@ -114,6 +115,7 @@ fn poll(pin_num: u64) -> sysfs_gpio::Result<()> {
             let val = input.get_value()?;
             if val != prev_val {
                 println!("Pin State: {}", if val == 0 { "Low" } else { "High" });
+                light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
                 prev_val = val;
             }
             sleep(Duration::from_millis(10));
@@ -122,12 +124,19 @@ fn poll(pin_num: u64) -> sysfs_gpio::Result<()> {
 }
 
 fn main() {
+    let data: &str = r#"{
+                           "pin": 18,
+                           "duration_ms": 800,
+                           "period_ms": 200
+                        }"#;
+    let light_args: Arguments = serde_json::from_str(data).unwrap();
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("Usage: ./poll <pin>");
     } else {
         match args[1].parse::<u64>() {
-            Ok(pin) => match poll(pin) {
+            Ok(pin) => match poll(pin, light_args) {
                 Ok(()) => println!("Polling Complete!"),
                 Err(err) => println!("Error: {}", err),
             },
