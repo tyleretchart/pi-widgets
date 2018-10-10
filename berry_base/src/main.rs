@@ -27,9 +27,9 @@ struct Arguments {
 fn main() -> Result<(), Error> {
     // Some JSON input data as a &str. Maybe this comes from the user.
     let data: &str = r#"{
-                    "pin": 12,
-                    "duration_ms": 400,
-                    "period_ms": 800
+                    "pin": 18,
+                    "duration_ms": 800,
+                    "period_ms": 200
                   }"#;
 
     // Parse the string of data into an Argument object. This is exactly the
