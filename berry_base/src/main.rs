@@ -109,16 +109,20 @@ fn poll(pin_num: u64, light_args: Arguments) -> sysfs_gpio::Result<()> {
 
     let input = Pin::new(pin_num);
     input.with_exported(|| {
-        input.set_direction(Direction::In)?;
+        sleep(Duration::from_millis(120));
+	      input.set_direction(Direction::In)?;
         let mut prev_val: u8 = 255;
         loop {
             let val = input.get_value()?;
-            if val != prev_val {
-                println!("Pin State: {}", if val == 0 { "Low" } else { "High" });
+            // println!("Value: {}", val);
+						// if val == 0 && prev_val == 0 {
+						// if val != prev_val {
+            if val == 1 {
+						    println!("Pin State: {}", if val == 0 { "Low" } else { "High" });
                 light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
-                prev_val = val;
             }
             sleep(Duration::from_millis(10));
+						prev_val = val;
         }
     })
 }
