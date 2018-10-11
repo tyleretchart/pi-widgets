@@ -15,8 +15,20 @@ from kivy.core.window import Window
 import argparse
 from flask import Flask, abort, request
 
-from multiprocessing import Process
+import requests
 import threading
+
+#
+# ------------------------------------------
+# global address object
+
+
+class Address:
+    def __init__(self):
+        self.current_pi = "0.0.0.0"
+
+
+address = Address()
 
 #
 # ------------------------------------------
@@ -34,7 +46,6 @@ code_input = TextInput(
     cursor_blink=True,
     cursor=True)
 send_button = Button(text="Send", background_color=[2, 1, 1, 1])
-polling_button = Button(text="Poll", background_color=[2, 1, 1, 1])
 top_layout = GridLayout(
     cols=2, rows=1, row_force_default=True, row_default_height=600)
 button_layout = GridLayout(
@@ -49,11 +60,12 @@ def code():
     if "address" not in request.form and "code" not in request.form:
         return 'Send the right parameters: "address" and "code"'
     else:
-        address = request.form["address"]
-        code = request.form["code"]
+        address.current_pi = request.form["address"]
+        code_input.text = request.form["code"]
     return ""
 
 
+# TODO: Remove
 @app.route('/hello', methods=['GET'])
 def hello():
     code_input.text = "hello world\n"
@@ -63,8 +75,14 @@ def hello():
 #
 # ------------------------------------------
 # kivy functions defined
-def print_text(instance):
-    print(code_input.text)
+def send_code(instance):
+    # send code to raspberry pi
+    url = address.current_pi + ":5002/code"
+    try:
+        r = requests.post(url, data={"code": code_input.text})
+        print(r.text)
+    except Exception as e:
+        print("Couldn't connect due to |{}|".format(e))
 
 
 #
@@ -72,11 +90,10 @@ def print_text(instance):
 # kivy main app
 class PaletteApp(App):
     def build(self):
-        send_button.bind(on_press=print_text)
+        send_button.bind(on_press=send_code)
 
         top_layout.add_widget(code_input)
         button_layout.add_widget(send_button)
-        button_layout.add_widget(polling_button)
         top_layout.add_widget(button_layout)
 
         return top_layout
