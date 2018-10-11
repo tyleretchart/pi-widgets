@@ -12,85 +12,60 @@ from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.scatter import Scatter
 from kivy.core.window import Window
 
-import argparse
-from flask import Flask, abort, request
-
-import requests
-import threading
+import socket
 
 #
 # ------------------------------------------
-# global address object
+# code object
 
 
-class Address:
+class Code():
     def __init__(self):
-        self.current_pi = "0.0.0.0"
+        self.code = ""
 
 
-address = Address()
-
-#
-# ------------------------------------------
-# flask init
-
-app = Flask(__name__)
-app.secret_key = 'super secret key'
-
-#
-# ------------------------------------------
-# kivy object init
-code_input = TextInput(
-    hint_text="No button selected...",
-    multiline=True,
-    cursor_blink=True,
-    cursor=True)
-send_button = Button(text="Send", background_color=[2, 1, 1, 1])
-top_layout = GridLayout(
-    cols=2, rows=1, row_force_default=True, row_default_height=600)
-button_layout = GridLayout(
-    cols=1, rows=2, row_force_default=True, row_default_height=100)
-
-
-#
-# ------------------------------------------
-# flask endpoint defined
-@app.route('/code', methods=['POST'])
-def code():
-    if "address" not in request.form and "code" not in request.form:
-        return 'Send the right parameters: "address" and "code"'
-    else:
-        address.current_pi = request.form["address"]
-        code_input.text = request.form["code"]
-    return ""
-
-
-# TODO: Remove
-@app.route('/hello', methods=['GET'])
-def hello():
-    code_input.text = "hello world\n"
-    return code_input.text
-
+code = Code()
 
 #
 # ------------------------------------------
 # kivy functions defined
+
+
 def send_code(instance):
-    # send code to raspberry pi
-    url = address.current_pi + ":5002/code"
-    try:
-        r = requests.post(url, data={"code": code_input.text})
-        print(r.text)
-    except Exception as e:
-        print("Couldn't connect due to |{}|".format(e))
+    text_input = None
+    for c in instance.parent.parent.children:
+        if type(c) == type(TextInput()):
+            text_input = c
+    code.code = text_input.text
+    App.get_running_app().stop()
+
+
+def on_focus(instance, value):
+    instance.text = code.code
 
 
 #
 # ------------------------------------------
 # kivy main app
-class PaletteApp(App):
+
+
+class GuiApp(App):
     def build(self):
+        # build widgets
+        code_input = TextInput(
+            hint_text="No button selected...",
+            multiline=True,
+            cursor_blink=True,
+            cursor=True)
+        send_button = Button(text="Send", background_color=[2, 1, 1, 1])
+        top_layout = GridLayout(
+            cols=2, rows=1, row_force_default=True, row_default_height=600)
+        button_layout = GridLayout(
+            cols=1, rows=2, row_force_default=True, row_default_height=100)
+
+        # bind functions
         send_button.bind(on_press=send_code)
+        code_input.bind(focus=on_focus)
 
         top_layout.add_widget(code_input)
         button_layout.add_widget(send_button)
@@ -102,10 +77,33 @@ class PaletteApp(App):
 #
 # ------------------------------------------
 # main
-if __name__ == '__main__':
-    # run flask
-    server = threading.Thread(target=app.run, args=["localhost", 5001])
-    server.start()
 
-    # run gui
-    PaletteApp().run()
+if __name__ == '__main__':
+    host = "127.0.0.1"
+    port = 5011
+    gui = GuiApp()
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((host, port))
+    while True:
+        s.listen(1)
+        conn, addr = s.accept()
+        print("Connection opened:\n{}\n{}".format(conn, addr))
+
+        try:
+            data = conn.recv(1024)
+            code.code = data.decode()
+            print("Code recieved:", code.code)
+
+        except socket.error:
+            print("Error Occured.")
+            break
+
+        gui.run()
+        
+        final_code = str.encode(code.code)
+        print("Code sent:", final_code)
+        conn.sendall(str.encode(code.code))
+        conn.close()
+        print("Connection closed")
+        print()

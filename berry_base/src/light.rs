@@ -4,15 +4,22 @@ use self::sysfs_gpio::{Direction, Pin};
 use std::thread::sleep;
 use std::time::Duration;
 
+#[derive(Serialize, Deserialize)]
+pub struct LightArguments {
+    pub pin: u64,
+    pub duration_ms: u64,
+    pub period_ms: u64,
+}
+
 pub fn blink_led(led: u64, duration_ms: u64, period_ms: u64) {
-    match blink_led_once(led, duration_ms, period_ms) {
+    match blink_led_raw(led, duration_ms, period_ms) {
         Ok(()) => println!("Success!"),
         Err(err) => println!("We have a blinking problem: {}", err),
     }
 }
 
 // Export a GPIO for use.  This will not fail if already exported
-fn blink_led_once(led: u64, duration_ms: u64, period_ms: u64) -> sysfs_gpio::Result<()> {
+fn blink_led_raw(led: u64, duration_ms: u64, period_ms: u64) -> sysfs_gpio::Result<()> {
     let my_led = Pin::new(led);
     my_led.with_exported(|| {
         // This extra sleep is needed to make sure that the pin is exported
