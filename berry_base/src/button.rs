@@ -13,19 +13,20 @@ pub fn poll(pin_num: u64) -> bool {
     // really present at the moment.  Revisit later.
 
     let input = Pin::new(pin_num);
+		input.set_value(1);
     let mut pressed: bool = false;
     input.with_exported(|| {
         sleep(Duration::from_millis(120));
         input.set_direction(Direction::In)?;
         let mut sum: u8 = 0;
         let mut iters: u8 = 0;
-        for _ in 0..6 {
+        for _ in 0..20 {
             let val = input.get_value()?;
 
             sum += val;
             iters += 1;
 
-            if iters > 5 {
+            if iters > 18 {
                 if sum == 0 {
                     pressed = true;
                     // println!("Pin State: {}", if val == 0 { "Low" } else { "High" });

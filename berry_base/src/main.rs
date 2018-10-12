@@ -25,7 +25,18 @@ fn main() {
 
     let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
 
-    let pressed = button::poll(27);
+	  loop {
+        let code_change_pressed = button::poll(26);
+        if code_change_pressed {
+				    light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
+						code_change_pressed = false;
+				}
+				let light_activate_pressed = button::poll(27);
+				if light_activate_pressed {
+						light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
+						light_activate_pressed = false;
+			  }
+    }
 }
 
 // fn main() {
