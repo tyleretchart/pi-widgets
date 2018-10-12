@@ -11,7 +11,8 @@ def client(host, port, data):
 
 
 if __name__ == "__main__":
-    host = "127.0.0.1"
+    # host = "127.0.0.1"
+    host = "192.168.1.172"
     port = 5011
     data = b'Hello, world'
     client(host, port, data)

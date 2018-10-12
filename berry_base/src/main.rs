@@ -27,20 +27,26 @@ fn main() {
     let address: String = args[1].parse().unwrap();
 
     // default data
-    let data = "{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}";
-    let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+    let mut data = String::from("{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}");
+		// let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
 
     // poll buttons
     loop {
         let code_change_pressed = button::poll(26);
+        println!("CODE CHANGE BUTTON: {}", code_change_pressed);
         if code_change_pressed {
-            let data = communication::connect(&address, data.to_string());
-            let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+						// drop(light_args);
+            let data_tmp = communication::connect(&address, data.to_string());
+            // let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+				    data = String::from(data_tmp);
         }
         let light_activate_pressed = button::poll(27);
+				println!("LIGHT ACTIVATE BUTTON: {}", light_activate_pressed);
         if light_activate_pressed {
+            let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
             light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
         }
+				println!("");
     }
 }
 
