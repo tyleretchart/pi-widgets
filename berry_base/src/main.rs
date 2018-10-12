@@ -19,23 +19,28 @@ mod communication;
 mod light;
 
 fn main() {
-    let data = "{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}";
-    // let data = communication::connect(data.to_string());
-    println!("result: {}", data);
+    // collect address
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: ./run <ip:port>");
+    }
+    let address: String = args[1].parse().unwrap();
 
+    // default data
+    let data = "{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}";
     let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
 
-	  loop {
+    // poll buttons
+    loop {
         let code_change_pressed = button::poll(26);
         if code_change_pressed {
-				    light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
-						code_change_pressed = false;
-				}
-				let light_activate_pressed = button::poll(27);
-				if light_activate_pressed {
-						light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
-						light_activate_pressed = false;
-			  }
+            let data = communication::connect(&address, data.to_string());
+            let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+        }
+        let light_activate_pressed = button::poll(27);
+        if light_activate_pressed {
+            light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
+        }
     }
 }
 

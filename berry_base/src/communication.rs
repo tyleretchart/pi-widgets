@@ -2,9 +2,8 @@ use std::io::prelude::*;
 use std::io::{self, Read};
 use std::net::TcpStream;
 
-pub fn connect(data: String) -> String {
-    let mut stream =
-        TcpStream::connect("127.0.0.1:5011").expect("Couldn't connect to the server...");
+pub fn connect(address: &String, data: String) -> String {
+    let mut stream = TcpStream::connect(address).expect("Couldn't connect to the server...");
     stream
         .set_nonblocking(true)
         .expect("set_nonblocking call failed");

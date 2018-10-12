@@ -1,7 +1,6 @@
 extern crate sysfs_gpio;
 
 use self::sysfs_gpio::{Direction, Pin};
-use light;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -13,7 +12,6 @@ pub fn poll(pin_num: u64) -> bool {
     // really present at the moment.  Revisit later.
 
     let input = Pin::new(pin_num);
-		input.set_value(1);
     let mut pressed: bool = false;
     input.with_exported(|| {
         sleep(Duration::from_millis(120));
@@ -29,8 +27,6 @@ pub fn poll(pin_num: u64) -> bool {
             if iters > 18 {
                 if sum == 0 {
                     pressed = true;
-                    // println!("Pin State: {}", if val == 0 { "Low" } else { "High" });
-                    // light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
                 }
                 sum = 0;
                 iters = 0;
@@ -39,6 +35,5 @@ pub fn poll(pin_num: u64) -> bool {
         }
         Ok(())
     });
-    println!("Button pressed: {}", pressed);
     return pressed;
 }
