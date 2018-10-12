@@ -6,6 +6,7 @@ use std::time::Duration;
 
 #[derive(Serialize, Deserialize)]
 pub struct LightArguments {
+    pub host: String,
     pub pin: u64,
     pub duration_ms: u64,
     pub period_ms: u64,

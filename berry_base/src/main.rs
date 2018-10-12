@@ -35,15 +35,15 @@ mod light;
 //         println!("CODE CHANGE BUTTON: {}", code_change_pressed);
 //         if code_change_pressed {
 //             let data_tmp = communication::connect(&address, data.to_string());
-// 			data = String::from(data_tmp);
+//             data = String::from(data_tmp);
 //         }
 //         let light_activate_pressed = button::poll(27);
-// 				println!("LIGHT ACTIVATE BUTTON: {}", light_activate_pressed);
+//         println!("LIGHT ACTIVATE BUTTON: {}", light_activate_pressed);
 //         if light_activate_pressed {
 //             let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
 //             light::blink_led(light_args);
 //         }
-// 				println!("");
+//         println!("");
 //     }
 // }
 
@@ -63,45 +63,45 @@ use tokio_codec::BytesCodec;
 use std::net::SocketAddr;
 
 use std::thread;
-use std::thread::sleep;
-use std::time::Duration;
-
-fn print_stuff() {
-    loop {
-        println!("Another thread");
-        sleep(Duration::from_millis(120));
-    }
-}
 
 fn main() {
-    // Allow passing an address to listen on as the first argument of this
-    // program, but otherwise we'll just set up our TCP listener on
-    // 127.0.0.1:8080 for connections.
-    let addr = env::args().nth(2).unwrap_or("0.0.0.0:5002".to_string());
-    let addr = addr.parse::<SocketAddr>().unwrap();
+    // collect addresses
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: ./run <ip:port>");
+    }
+    let gui_address = env::args().nth(1).unwrap();
+    let self_address = env::args().nth(2).unwrap_or("0.0.0.0:5002".to_string());
+    let self_address = self_address.parse::<SocketAddr>().unwrap();
 
-    // Next up we create a TCP listener which will listen for incoming
-    // connections. This TCP listener is bound to the address we determined
-    // above and must be associated with an event loop, so we pass in a handle
-    // to our event loop. After the socket's created we inform that we're ready
-    // to go and start accepting connections.
-    let socket = TcpListener::bind(&addr).unwrap();
-    println!("Listening on: {}", addr);
+    // default data for button
+    let mut data = String::from(
+        "{\"host\": \"boysenberry\", \"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}",
+    );
 
-    // Here we convert the `TcpListener` to a stream of incoming connections
-    // with the `incoming` method. We then define how to process each element in
-    // the stream with the `for_each` method.
-    //
-    // This combinator, defined on the `Stream` trait, will allow us to define a
-    // computation to happen for all items on the stream (in this case TCP
-    // connections made to the server).  The return value of the `for_each`
-    // method is itself a future representing processing the entire stream of
-    // connections, and ends up being our server.
+    // set up tcp listener
+    let socket = TcpListener::bind(&self_address).unwrap();
+    println!("Listening on: {}", self_address);
+
+    // poll buttons
     thread::spawn(move || loop {
-        println!("Hello there");
-        sleep(Duration::from_millis(500));
+        // poll buttons
+        let code_change_pressed = button::poll(26);
+        println!("CODE CHANGE BUTTON: {}", code_change_pressed);
+        if code_change_pressed {
+            let data_tmp = communication::connect(&gui_address, data.to_string());
+            data = String::from(data_tmp);
+        }
+        let light_activate_pressed = button::poll(27);
+        println!("LIGHT ACTIVATE BUTTON: {}", light_activate_pressed);
+        if light_activate_pressed {
+            let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+            light::blink_led(light_args);
+        }
+        println!("");
     });
 
+    // set up tokio socket function
     let done = socket
         .incoming()
         .map_err(|e| println!("failed to accept socket; error = {:?}", e))
