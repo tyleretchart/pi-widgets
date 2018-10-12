@@ -6,25 +6,27 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-// extern crate serde;
-// extern crate serde_json;
+extern crate serde;
+extern crate serde_json;
 
-// #[macro_use]
-// extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 
-// use std::env;
+use std::env;
 
-// mod button;
-// mod communication;
-// mod light;
+mod button;
+mod communication;
+mod light;
 
-// fn main() {
-//     let data = "{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}";
-//     let data = communication::connect(data.to_string());
-//     println!("result: {}", data);
+fn main() {
+    let data = "{\"pin\": 18, \"duration_ms\": 800, \"period_ms\": 200}";
+    // let data = communication::connect(data.to_string());
+    println!("result: {}", data);
 
-//     let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
-// }
+    let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
+
+    let pressed = button::poll(27);
+}
 
 // fn main() {
 //     let data: &str = r#"{
@@ -50,57 +52,59 @@
 
 // ========================================================================================
 
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::thread;
-use std::time::Duration;
+// Thread Stuff
 
-fn main() {
-    let mut foo: Vec<i32> = Vec::new();
-    foo.push(34);
-    foo.push(56);
+// use std::sync::Arc;
+// use std::sync::Mutex;
+// use std::thread;
+// use std::time::Duration;
 
-    let data = Arc::new(Mutex::new(foo));
+// fn main() {
+//     let mut foo: Vec<i32> = Vec::new();
+//     foo.push(34);
+//     foo.push(56);
 
-    for i in 0..5 {
-        let dd = data.clone();
-        let ddd = data.clone();
-        let index = i;
+//     let data = Arc::new(Mutex::new(foo));
 
-        thread::spawn(move || {
-            println!("spawned consumer thread {}", index);
+//     for i in 0..5 {
+//         let dd = data.clone();
+//         let ddd = data.clone();
+//         let index = i;
 
-            loop {
-                let mut d = dd.lock().unwrap();
+//         thread::spawn(move || {
+//             println!("spawned consumer thread {}", index);
 
-                if d.len() == 0 {
-                    println!("no work for thread {}, sleeping", i);
-                    thread::sleep(Duration::from_secs(1));
-                } else {
-                    let x: i32 = d.pop().unwrap();
+//             loop {
+//                 let mut d = dd.lock().unwrap();
 
-                    println!("thread {} has work!  {}", index, x);
-                    thread::sleep(Duration::from_secs(x as u64));
-                    println!("thread {} work complete!", index);
-                }
-            }
-        });
+//                 if d.len() == 0 {
+//                     println!("no work for thread {}, sleeping", i);
+//                     thread::sleep(Duration::from_secs(1));
+//                 } else {
+//                     let x: i32 = d.pop().unwrap();
 
-        thread::spawn(move || {
-            println!("spawned producer thread {}", index);
+//                     println!("thread {} has work!  {}", index, x);
+//                     thread::sleep(Duration::from_secs(x as u64));
+//                     println!("thread {} work complete!", index);
+//                 }
+//             }
+//         });
 
-            loop {
-                let mut d = ddd.lock().unwrap();
+//         thread::spawn(move || {
+//             println!("spawned producer thread {}", index);
 
-                if d.len() == 0 {
-                    println!("thread {} has work!", index);
-                    d.push(34);
-                    println!("thread {} work complete!", index);
-                } else {
-                    println!("no work for thread {}, sleeping", i);
-                    thread::sleep(Duration::from_secs(1));
-                }
-            }
-        });
-    }
-}
+//             loop {
+//                 let mut d = ddd.lock().unwrap();
+
+//                 if d.len() == 0 {
+//                     println!("thread {} has work!", index);
+//                     d.push(34);
+//                     println!("thread {} work complete!", index);
+//                 } else {
+//                     println!("no work for thread {}, sleeping", i);
+//                     thread::sleep(Duration::from_secs(1));
+//                 }
+//             }
+//         });
+//     }
+// }
