@@ -54,14 +54,15 @@ mod light;
 extern crate tokio;
 extern crate tokio_codec;
 
-use tokio_codec::BytesCodec;
+use tokio::codec::Decoder;
 use tokio::net::TcpListener;
 use tokio::prelude::*;
-use tokio::codec::Decoder;
+use tokio_codec::BytesCodec;
 
 // use std::env;
 use std::net::SocketAddr;
 
+use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -96,7 +97,11 @@ fn main() {
     // connections made to the server).  The return value of the `for_each`
     // method is itself a future representing processing the entire stream of
     // connections, and ends up being our server.
-    tokio::spawn()
+    thread::spawn(move || loop {
+        println!("Hello there");
+        sleep(Duration::from_millis(500));
+    });
+
     let done = socket
         .incoming()
         .map_err(|e| println!("failed to accept socket; error = {:?}", e))
