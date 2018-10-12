@@ -41,7 +41,7 @@ mod light;
 // 				println!("LIGHT ACTIVATE BUTTON: {}", light_activate_pressed);
 //         if light_activate_pressed {
 //             let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
-//             light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
+//             light::blink_led(light_args);
 //         }
 // 				println!("");
 //     }
@@ -61,6 +61,16 @@ use tokio::codec::Decoder;
 
 // use std::env;
 use std::net::SocketAddr;
+
+use std::thread::sleep;
+use std::time::Duration;
+
+fn print_stuff() {
+    loop {
+        println!("Another thread");
+        sleep(Duration::from_millis(120));
+    }
+}
 
 fn main() {
     // Allow passing an address to listen on as the first argument of this
@@ -86,6 +96,7 @@ fn main() {
     // connections made to the server).  The return value of the `for_each`
     // method is itself a future representing processing the entire stream of
     // connections, and ends up being our server.
+    tokio::spawn()
     let done = socket
         .incoming()
         .map_err(|e| println!("failed to accept socket; error = {:?}", e))
@@ -108,7 +119,7 @@ fn main() {
 
                     let data = String::from_utf8(bytes.to_vec()).expect("Found invalid UTF-8");
                     let light_args: light::LightArguments = serde_json::from_str(&data.trim()).unwrap();
-                    light::blink_led(light_args.pin, light_args.duration_ms, light_args.period_ms);
+                    light::blink_led(light_args);
                     Ok(())
                 })
                 // After our copy operation is complete we just print out some helpful
