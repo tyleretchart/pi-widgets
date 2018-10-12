@@ -14,3 +14,4 @@ if __name__ == "__main__":
     host = "127.0.0.1"
     port = 5011
     data = b'Hello, world'
+    client(host, port, data)

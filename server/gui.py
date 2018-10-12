@@ -12,6 +12,7 @@ from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.scatter import Scatter
 from kivy.core.window import Window
 
+import json
 import socket
 
 #
@@ -37,7 +38,11 @@ def send_code(instance):
         if type(c) == type(TextInput()):
             text_input = c
     code.code = text_input.text
-    App.get_running_app().stop()
+    try:
+        json.dumps(json.loads(code.code))
+        App.get_running_app().stop()
+    except:
+        code.code += "\nINVALID CODE"
 
 
 def on_focus(instance, value):
