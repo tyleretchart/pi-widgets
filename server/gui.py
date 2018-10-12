@@ -84,12 +84,13 @@ class GuiApp(App):
 # main
 
 if __name__ == '__main__':
-    host = "127.0.0.1"
-    port = 5011
+    host = "0.0.0.0"
+    port = 5001
     gui = GuiApp()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((host, port))
+    print("Socket bound: {}:{}".format(host, port))
     while True:
         s.listen(1)
         conn, addr = s.accept()
