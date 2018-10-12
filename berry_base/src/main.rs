@@ -50,63 +50,57 @@
 
 // ========================================================================================
 
-#[cfg(feature = "tokio")]
-extern crate futures;
-#[cfg(feature = "tokio")]
-extern crate sysfs_gpio;
-#[cfg(feature = "tokio")]
-extern crate tokio_core;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 
-#[cfg(feature = "tokio")]
-use futures::{Future, Stream};
-#[cfg(feature = "tokio")]
-use sysfs_gpio::{Direction, Edge, Pin};
-#[cfg(feature = "tokio")]
-use std::env;
-#[cfg(feature = "tokio")]
-use tokio_core::reactor::Core;
-
-#[cfg(feature = "tokio")]
-fn stream(pin_nums: Vec<u64>) -> sysfs_gpio::Result<()> {
-    // NOTE: this currently runs forever and as such if
-    // the app is stopped (Ctrl-C), no cleanup will happen
-    // and the GPIO will be left exported.  Not much
-    // can be done about this as Rust signal handling isn't
-    // really present at the moment.  Revisit later.
-    let pins: Vec<_> = pin_nums.iter().map(|&p| (p, Pin::new(p))).collect();
-    let mut l = Core::new()?;
-    let handle = l.handle();
-    for &(i, ref pin) in pins.iter() {
-        pin.export()?;
-        pin.set_direction(Direction::In)?;
-        pin.set_edge(Edge::BothEdges)?;
-        handle.spawn(pin.get_value_stream(&handle)?
-                         .for_each(move |val| {
-                                       println!("Pin {} changed value to {}", i, val);
-                                       Ok(())
-                                   })
-                         .map_err(|_| ()));
-    }
-    // Wait forever for events
-    loop {
-        l.turn(None)
-    }
-}
-
-#[cfg(feature = "tokio")]
 fn main() {
-    let pins: Vec<u64> = env::args()
-        .skip(1)
-        .map(|a| a.parse().expect("Pins must be specified as integers"))
-        .collect();
-    if pins.is_empty() {
-        println!("Usage: ./tokio <pin> [pin ...]");
-    } else {
-        stream(pins).unwrap();
-    }
-}
+    let mut foo: Vec<i32> = Vec::new();
+    foo.push(34);
+    foo.push(56);
 
-#[cfg(not(feature = "tokio"))]
-fn main() {
-    println!("This example requires the `tokio` feature to be enabled.");
+    let data = Arc::new(Mutex::new(foo));
+
+    for i in 0..5 {
+        let dd = data.clone();
+        let ddd = data.clone();
+        let index = i;
+
+        thread::spawn(move || {
+            println!("spawned consumer thread {}", index);
+
+            loop {
+                let mut d = dd.lock().unwrap();
+
+                if d.len() == 0 {
+                    println!("no work for thread {}, sleeping", i);
+                    thread::sleep(Duration::from_secs(1));
+                } else {
+                    let x: i32 = d.pop().unwrap();
+
+                    println!("thread {} has work!  {}", index, x);
+                    thread::sleep(Duration::from_secs(x as u64));
+                    println!("thread {} work complete!", index);
+                }
+            }
+        });
+
+        thread::spawn(move || {
+            println!("spawned producer thread {}", index);
+
+            loop {
+                let mut d = ddd.lock().unwrap();
+
+                if d.len() == 0 {
+                    println!("thread {} has work!", index);
+                    d.push(34);
+                    println!("thread {} work complete!", index);
+                } else {
+                    println!("no work for thread {}, sleeping", i);
+                    thread::sleep(Duration::from_secs(1));
+                }
+            }
+        });
+    }
 }
