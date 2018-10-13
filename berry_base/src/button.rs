@@ -5,12 +5,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 pub fn poll(pin_num: u64) -> bool {
-    // NOTE: this currently runs forever and as such if
-    // the app is stopped (Ctrl-C), no cleanup will happen
-    // and the GPIO will be left exported.  Not much
-    // can be done about this as Rust signal handling isn't
-    // really present at the moment.  Revisit later.
-
     let input = Pin::new(pin_num);
     let mut pressed: bool = false;
     let mut val: u8 = 1;
