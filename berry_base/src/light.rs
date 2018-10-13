@@ -24,7 +24,7 @@ fn blink_led_raw(light_args: LightArguments) -> sysfs_gpio::Result<()> {
     let my_led = Pin::new(light_args.pin);
     my_led.with_exported(|| {
         // This extra sleep is needed to make sure that the pin is exported
-        sleep(Duration::from_millis(120));
+        sleep(Duration::from_millis(200));
         my_led.set_direction(Direction::Low)?;
         let iterations = light_args.duration_ms / light_args.period_ms / 2;
         for _ in 0..iterations {
