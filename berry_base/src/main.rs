@@ -60,7 +60,6 @@ fn main() {
         if light_activate_pressed {
             let light_args: light::LightArguments = serde_json::from_str(&data).unwrap();
             communication::connect_with_light(&light_args.host, data.to_string());
-            // light::blink_led(light_args);
         }
         println!("");
     });
@@ -70,13 +69,6 @@ fn main() {
         .incoming()
         .map_err(|e| println!("failed to accept socket; error = {:?}", e))
         .for_each(move |socket| {
-            // Once we're inside this closure this represents an accepted client
-            // from our server. The `socket` is the client connection (similar to
-            // how the standard library operates).
-            //
-            // We're parsing each socket with the `BytesCodec` included in `tokio_io`,
-            // and then we `split` each codec into the reader/writer halves.
-            //
             // See https://docs.rs/tokio-codec/0.1/src/tokio_codec/bytes_codec.rs.html
             let framed = BytesCodec::new().framed(socket);
             let (_writer, reader) = framed.split();
@@ -107,25 +99,10 @@ fn main() {
                     Ok(())
                 });
 
-            // And this is where much of the magic of this server happens. We
-            // crucially want all clients to make progress concurrently, rather than
-            // blocking one on completion of another. To achieve this we use the
-            // `tokio::spawn` function to execute the work in the background.
-            //
-            // This function will transfer ownership of the future (`msg` in this
-            // case) to the Tokio runtime thread pool that. The thread pool will
-            // drive the future to completion.
-            //
-            // Essentially here we're executing a new task to run concurrently,
-            // which will allow all of our clients to be processed concurrently.
+            // start processor
             tokio::spawn(processor)
         });
 
-    // And finally now that we've define what our server is, we run it!
-    //
-    // This starts the Tokio runtime, spawns the server task, and blocks the
-    // current thread until all tasks complete execution. Since the `done` task
-    // never completes (it just keeps accepting sockets), `tokio::run` blocks
-    // forever (until ctrl-c is pressed).
+    // start tokio
     tokio::run(done);
 }
